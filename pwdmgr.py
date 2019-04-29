@@ -51,7 +51,7 @@ def getFormattedTable(selected, passwords):
 passwords = getPasswords()
 filteredList = passwords
 
-selected = 0 
+selected = 2 
 searching = False
 info = False
 
@@ -59,7 +59,7 @@ def filterTable(buff):
     global searching
     global selected
     global filteredList
-    selected = 0
+    selected = 2
     searching = False
 
     filteredList = []
@@ -165,10 +165,10 @@ def _(event):
     global selected
     global filteredList
     global passwords
-    selected = 0
+    selected = 2
     passwords = getPasswords()
     filteredList = passwords
-    table.content.text = getFormattedTable(0, filteredList)
+    table.content.text = getFormattedTable(selected, filteredList)
 
 @kb.add('i')
 def _(event):
