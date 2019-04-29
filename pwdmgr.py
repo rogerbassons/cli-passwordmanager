@@ -15,6 +15,8 @@ import pyperclip
 
 from tabulate import tabulate
 
+from dao import getPasswords
+
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -45,10 +47,7 @@ def getFormattedTable(selected, passwords):
     return ANSI(tabulatePasswords(selected, passwords))
 
 
-passwords = []
-for x in range(0,100):
-    i = str(x)
-    passwords.append({"group": "G" + i, "name": "Site" + i, "user": "user" + i, "password": "pass" + i})
+passwords = getPasswords()
 filteredList = passwords
 
 selected = 0 
@@ -63,7 +62,7 @@ def filterTable(buff):
 
     filteredList = []
     for pwd in passwords:
-        if any(input_field.text in pwd[attr] for attr in pwd):
+        if any(input_field.text.lower() in pwd[attr].lower() for attr in pwd):
             filteredList.append(pwd)
     text = ANSI("")
     if len(filteredList) == 0:
@@ -139,7 +138,9 @@ def _(event):
 def _(event):
     global selected
     global filteredList
+    global passwords
     selected = 0
+    passwords = getPasswords()
     filteredList = passwords
     root_container.children[0].content.text = getFormattedTable(0, filteredList)
 
