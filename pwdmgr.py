@@ -5,11 +5,12 @@ from prompt_toolkit.application import Application
 from prompt_toolkit.key_binding import KeyBindings, ConditionalKeyBindings
 from prompt_toolkit.filters import Condition
 from prompt_toolkit.layout import Layout
-from prompt_toolkit.layout.containers import ConditionalContainer, HSplit, Window
+from prompt_toolkit.layout.containers import ConditionalContainer, HSplit, Window, Float, FloatContainer
 from prompt_toolkit.layout.controls import FormattedTextControl
-from prompt_toolkit.widgets import TextArea, SearchToolbar
+from prompt_toolkit.widgets import TextArea, SearchToolbar, Dialog, Label, Button
 from prompt_toolkit import ANSI
 from prompt_toolkit.layout.screen import Point
+
 
 import pyperclip
 
@@ -52,6 +53,7 @@ filteredList = passwords
 
 selected = 0 
 searching = False
+info = False
 
 def filterTable(buff):
     global searching
@@ -78,21 +80,45 @@ def filterTable(buff):
 def isSearching():
     return searching
 
+@Condition
+def showInfo():
+    return info
+
+
 class GetCursorPosition:
     def __call__(self):
         global selected
         y = selected
         return Point(0,y)
 
+def button_handler():
+    global info
+    info = False
+
+dialog = Dialog(
+        title="Info",
+        body=Label(text="...", dont_extend_height=True),
+        buttons=[
+            Button(text="OK", handler=button_handler),
+        ])
+
 search_field = SearchToolbar()
 input_field = TextArea(height=1, prompt='/', style='class:input-field', multiline=False, wrap_lines=False, search_field=search_field)
 input_field.accept_handler = filterTable
 
+table = Window(content=FormattedTextControl(text=getFormattedTable(selected, filteredList), 
+            get_cursor_position=GetCursorPosition()))
+
 root_container = HSplit([
-    Window(content=FormattedTextControl(text=getFormattedTable(selected, filteredList), get_cursor_position=GetCursorPosition())),
-    ConditionalContainer(content=input_field, filter=isSearching)
+    table,
+    ConditionalContainer(content=input_field, filter=isSearching),
+    ConditionalContainer(content=dialog, filter=showInfo)
 ])
 layout = Layout(container=root_container)
+
+
+def getSelectedPassword(selected):
+    return filteredList[selected - 2]
 
 # Key bindings.
 kb = KeyBindings()
@@ -107,32 +133,32 @@ def _(event):
     global selected
     if selected <= len(filteredList):
         selected = selected + 1
-        root_container.children[0].content.text = getFormattedTable(selected, filteredList)
+        table.content.text = getFormattedTable(selected, filteredList)
 
 @kb.add('k')
 def _(event):
     global selected
     if selected > 0:
         selected = selected - 1
-        root_container.children[0].content.text = getFormattedTable(selected, filteredList)
+        table.content.text = getFormattedTable(selected, filteredList)
 
 @kb.add('y')
 def _(event):
     global selected
-    password = filteredList[selected - 2]["password"]
+    password = getSelectedPassword(selected)["password"]
     pyperclip.copy(password)
 
 @kb.add('x')
 def _(event):
     global selected
-    username = filteredList[selected - 2]["user"]
+    username = getSelectedPassword(selected)["user"]
     pyperclip.copy(username)
 
 @kb.add('g', 'g')
 def _(event):
     global selected
     selected = 0
-    root_container.children[0].content.text = getFormattedTable(0, filteredList)
+    table.content.text = getFormattedTable(0, filteredList)
 
 @kb.add('r')
 def _(event):
@@ -142,7 +168,19 @@ def _(event):
     selected = 0
     passwords = getPasswords()
     filteredList = passwords
-    root_container.children[0].content.text = getFormattedTable(0, filteredList)
+    table.content.text = getFormattedTable(0, filteredList)
+
+@kb.add('i')
+def _(event):
+    global info
+
+    textInfo = getSelectedPassword(selected)["info"]
+
+    if (not info or textInfo != dialog.body.text):
+        info = True
+        dialog.body = Label(text=textInfo, dont_extend_height=True)
+    else:
+        info = False
 
 @kb.add('/')
 def _(event):
