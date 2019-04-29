@@ -54,6 +54,7 @@ filteredList = passwords
 selected = 2 
 searching = False
 info = False
+selectedInfo = selected
 
 def filterTable(buff):
     global searching
@@ -156,6 +157,13 @@ def _(event):
     username = getSelectedPassword(selected)["user"]
     pyperclip.copy(username)
 
+@kb.add('w')
+def _(event):
+    global selected
+    info = getSelectedPassword(selected)["info"]
+    pyperclip.copy(info)
+
+
 @kb.add('g', 'g')
 def _(event):
     global selected
@@ -175,11 +183,12 @@ def _(event):
 @kb.add('i')
 def _(event):
     global info
+    global selectedInfo
 
-    textInfo = getSelectedPassword(selected)["info"]
-
-    if (not info or textInfo != dialog.body.text):
+    if (not info or selected != selectedInfo):
+        selectedInfo = selected
         info = True
+        textInfo = getSelectedPassword(selected)["info"]
         dialog.body = Label(text=textInfo, dont_extend_height=True)
         layout.focus(dialog)
     else:
