@@ -5,7 +5,7 @@ from prompt_toolkit.application import Application
 from prompt_toolkit.key_binding import KeyBindings, ConditionalKeyBindings
 from prompt_toolkit.filters import Condition
 from prompt_toolkit.layout import Layout
-from prompt_toolkit.layout.containers import ConditionalContainer, HSplit, Window, Float, FloatContainer
+from prompt_toolkit.layout.containers import ConditionalContainer, HSplit, Window
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.widgets import TextArea, SearchToolbar, Dialog, Label, Button
 from prompt_toolkit import ANSI
