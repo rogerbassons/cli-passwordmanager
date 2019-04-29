@@ -94,6 +94,8 @@ class GetCursorPosition:
 def button_handler():
     global info
     info = False
+    layout.focus(input_field)
+
 
 dialog = Dialog(
         title="Info",
@@ -179,8 +181,11 @@ def _(event):
     if (not info or textInfo != dialog.body.text):
         info = True
         dialog.body = Label(text=textInfo, dont_extend_height=True)
+        layout.focus(dialog)
     else:
         info = False
+        layout.focus(input_field)
+
 
 @kb.add('/')
 def _(event):
