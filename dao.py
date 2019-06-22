@@ -1,3 +1,5 @@
+from pwdmgr import pwdmgr
+
 def getPasswords():
     passwords = []
 
@@ -6,3 +8,7 @@ def getPasswords():
         passwords.append({"group": "G" + i, "name": "Site" + i, "user": "user" + i, "password": "pass" + i, "info": "Bla bla bla... " + i, "project": "Proj" + i})
 
     return passwords
+
+
+pwdmgr(getPasswords)
+

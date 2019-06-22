@@ -17,7 +17,6 @@ import pyperclip
 from tabulate import tabulate
 
 from unidecode import unidecode
-from dao import getPasswords
 
 def toPlain(a):
     return unidecode(a.lower())
@@ -51,11 +50,10 @@ def tabulatePasswords(selected, passwords):
 def getFormattedTable(selected, passwords):
     return ANSI(tabulatePasswords(selected, passwords))
 
+passwords = lambda: []
+filteredList = []
 
-passwords = getPasswords()
-filteredList = passwords
-
-selected = 2 
+selected = 0 
 searching = False
 info = False
 selectedInfo = selected
@@ -84,6 +82,16 @@ def filterTable(buff):
         text = getFormattedTable(selected, filteredList)
     
     table.content.text = text
+
+def reloadPasswords():
+    global selected
+    global filteredList
+    global passwords
+    passwords = getPasswords()
+    filteredList = passwords
+    if len(filteredList) > 0:
+        selected = 2
+    table.content.text = getFormattedTable(selected, filteredList)
 
 
 @Condition
@@ -130,7 +138,10 @@ layout = Layout(container=root_container)
 
 
 def getSelectedPassword(selected):
-    return filteredList[selected - 2]
+    if selected < 2:
+        return None
+    else:
+        return filteredList[selected - 2]
 
 # Key bindings.
 kb = KeyBindings()
@@ -181,13 +192,7 @@ def _(event):
 
 @kb.add('r')
 def _(event):
-    global selected
-    global filteredList
-    global passwords
-    selected = 2
-    passwords = getPasswords()
-    filteredList = passwords
-    table.content.text = getFormattedTable(selected, filteredList)
+    reloadPasswords()
 
 @kb.add('i')
 def _(event):
@@ -222,9 +227,11 @@ application = Application(
     key_bindings=registry,
     full_screen=True)
 
-def main():
+def pwdmgr(_getPasswords):
+    global getPasswords
+    getPasswords = _getPasswords
+    reloadPasswords()
     application.run()
 
-
 if __name__ == '__main__':
-    main()
+    pwdmgr(lambda: [])
