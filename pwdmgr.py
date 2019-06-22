@@ -16,7 +16,11 @@ import pyperclip
 
 from tabulate import tabulate
 
+from unidecode import unidecode
 from dao import getPasswords
+
+def toPlain(a):
+    return unidecode(a.lower())
 
 class bcolors:
     HEADER = '\033[95m'
@@ -38,10 +42,10 @@ def tabulatePasswords(selected, passwords):
             start = bcolors.OKGREEN
             end = bcolors.ENDC
 
-        table.append([start + pwd["group"], pwd["name"], pwd["user"], pwd["password"] + end])
+        table.append([start + pwd["group"], pwd["name"], pwd["user"], pwd["password"], pwd["project"] + end])
         i = i + 1
 
-    headers = ["group", "name", "user", "password"]
+    headers = ["group", "name", "user", "password", "project"]
     return tabulate(table, headers=headers)
 
 def getFormattedTable(selected, passwords):
@@ -60,21 +64,26 @@ def filterTable(buff):
     global searching
     global selected
     global filteredList
-    selected = 2
+    global table
+    selected = 0
     searching = False
 
     filteredList = []
     for pwd in passwords:
-        if any(input_field.text.lower() in pwd[attr].lower() for attr in pwd):
+        found = False
+        for attr in pwd:
+            if (pwd[attr] and not found):
+                found = toPlain(input_field.text) in toPlain(pwd[attr])
+        if (found):
             filteredList.append(pwd)
-    text = ANSI("")
+
+    text = ANSI("")  
     if len(filteredList) == 0:
         text = ANSI(bcolors.FAIL + "No matches..." + bcolors.ENDC)
     else:
         text = getFormattedTable(selected, filteredList)
     
-    if (len(root_container.children) > 0):
-        root_container.children[0].content.text = text
+    table.content.text = text
 
 
 @Condition
