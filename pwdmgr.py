@@ -18,6 +18,8 @@ from tabulate import tabulate
 
 from unidecode import unidecode
 
+import math
+
 def toPlain(a):
     return unidecode(a.lower())
 
@@ -47,7 +49,65 @@ def tabulatePasswords(selected, passwords):
     headers = ["group", "name", "user", "password", "project"]
     return tabulate(table, headers=headers)
 
+page = -1
+pageSize = 30
+
+def nextPassword():
+    global selected
+    global page
+    
+    if page != -1:
+        selected = (selected + 1) % (pageSize + 2)
+        if selected == 0:
+            page += 1
+            selected = 2
+    else:
+        selected += 1
+
+def previousPassword():
+    global selected
+    global page
+    
+    if page != -1 and page != 0:
+        selected = (selected - 1) % (pageSize + 2)
+        if selected == 1:
+            page -= 1
+            selected = pageSize + 1
+    else:
+        selected -= 1
+
+def nextPage():
+    global selected
+    global page
+    global filteredList
+    
+    lastPage = math.floor(len(filteredList) / pageSize)
+    if page != -1 and page != lastPage: 
+        page += 1
+        selected = 2
+        table.content.text = getFormattedTable(selected, filteredList)
+
+
+def previousPage():
+    global selected
+    global page
+    
+    if page != -1 and page > 0:
+        page -= 1
+        selected = 2
+        table.content.text = getFormattedTable(selected, filteredList)
+
+    
 def getFormattedTable(selected, passwords):
+    global page
+
+    if len(passwords) > pageSize:
+        if page == -1:
+            passwords = passwords[:pageSize]
+            page = 0
+        else:
+            passwords = passwords[page * pageSize: page * pageSize + pageSize]
+
     return ANSI(tabulatePasswords(selected, passwords))
 
 passwords = lambda: []
@@ -79,6 +139,7 @@ def filterTable(buff):
     if len(filteredList) == 0:
         text = ANSI(bcolors.FAIL + "No matches..." + bcolors.ENDC)
     else:
+        page = -1
         text = getFormattedTable(selected, filteredList)
     
     table.content.text = text
@@ -87,6 +148,9 @@ def reloadPasswords():
     global selected
     global filteredList
     global passwords
+    global page
+
+    page = -1 
     passwords = getPasswords()
     filteredList = passwords
     if len(filteredList) > 0:
@@ -136,12 +200,19 @@ root_container = HSplit([
 ])
 layout = Layout(container=root_container)
 
+def goNextPassword():
+    nextPassword()
+    table.content.text = getFormattedTable(selected, filteredList)
+
 
 def getSelectedPassword(selected):
     if selected < 2:
         return None
     else:
-        return filteredList[selected - 2]
+        if (page > 0):
+            return filteredList[selected - 2 + pageSize * page]
+        else:
+            return filteredList[selected - 2]
 
 # Key bindings.
 kb = KeyBindings()
@@ -151,18 +222,34 @@ def _(event):
     " Quit when control-c is pressed. "
     event.app.exit()
 
+@kb.add('n')
+def _(event):
+    nextPage()
+
+@kb.add('p')
+def _(event):
+    previousPage()
+
 @kb.add('j')
 def _(event):
     global selected
-    if selected <= len(filteredList):
-        selected = selected + 1
-        table.content.text = getFormattedTable(selected, filteredList)
+
+    lastPage = math.floor((len(filteredList) / pageSize))
+    if page == -1:
+        if selected <= len(filteredList):
+            goNextPassword()
+    elif page != lastPage:
+        goNextPassword()
+    elif page == lastPage:
+        lastPageElements = len(filteredList) - pageSize * page 
+        if selected <= lastPageElements:
+            goNextPassword()
 
 @kb.add('k')
 def _(event):
     global selected
     if selected > 0:
-        selected = selected - 1
+        previousPassword()
         table.content.text = getFormattedTable(selected, filteredList)
 
 @kb.add('y')
@@ -187,7 +274,10 @@ def _(event):
 @kb.add('g', 'g')
 def _(event):
     global selected
+    global page
+
     selected = 0
+    page = 0
     table.content.text = getFormattedTable(0, filteredList)
 
 @kb.add('r')
