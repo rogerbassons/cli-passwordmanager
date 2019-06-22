@@ -317,8 +317,13 @@ application = Application(
     key_bindings=registry,
     full_screen=True)
 
-def pwdmgr(_getPasswords):
+
+def pwdmgr(_getPasswords, *args, **kwargs):
     global getPasswords
+    global pageSize
+
+    pageSize = kwargs.get("pageSize", 30)
+
     getPasswords = _getPasswords
     reloadPasswords()
     application.run()

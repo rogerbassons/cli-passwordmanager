@@ -10,5 +10,5 @@ def getPasswords():
     return passwords
 
 
-pwdmgr(getPasswords)
+pwdmgr(getPasswords, pageSize=40)
 
