@@ -33,10 +33,10 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
-def tabulatePasswords(selected, passwords):
+def tabulatePasswords(selected, pwds):
     table = []
     i = 0
-    for pwd in passwords:
+    for pwd in pwds:
         start = ""
         end = ""
         if (selected == i + 2):
@@ -98,19 +98,21 @@ def previousPage():
         table.content.text = getFormattedTable(selected, filteredList)
 
     
-def getFormattedTable(selected, passwords):
+def getFormattedTable(selected, pwds):
     global page
 
-    if len(passwords) > pageSize:
+    _passwords = pwds
+
+    if len(pwds) > pageSize:
         if page == -1:
-            passwords = passwords[:pageSize]
+            _passwords = pwds[0:pageSize]
             page = 0
         else:
-            passwords = passwords[page * pageSize: page * pageSize + pageSize]
+            _passwords = pwds[page * pageSize: page * pageSize + pageSize]
 
-    return ANSI(tabulatePasswords(selected, passwords))
+    return ANSI(tabulatePasswords(selected, _passwords))
 
-passwords = lambda: []
+passwords = []
 filteredList = []
 
 selected = 0 
@@ -123,6 +125,9 @@ def filterTable(buff):
     global selected
     global filteredList
     global table
+    global passwords
+    global page
+
     selected = 0
     searching = False
 
@@ -132,6 +137,8 @@ def filterTable(buff):
         for attr in pwd:
             if (pwd[attr] and not found):
                 found = toPlain(input_field.text) in toPlain(pwd[attr])
+            else:
+                pass
         if (found):
             filteredList.append(pwd)
 
@@ -139,7 +146,8 @@ def filterTable(buff):
     if len(filteredList) == 0:
         text = ANSI(bcolors.FAIL + "No matches..." + bcolors.ENDC)
     else:
-        page = -1
+        if page != -1:
+            page = 0
         text = getFormattedTable(selected, filteredList)
     
     table.content.text = text
